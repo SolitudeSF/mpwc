@@ -1,10 +1,10 @@
-import os, terminal
+import os, terminal, strutils
 import masterpassword, cligen
 
 type
   PassType = enum
     ptLong = "long", ptMedium = "medium", ptShort = "short",
-    ptMaximum = "maximum", ptPin = "pin", ptBasic = "basic"
+    ptMaximum = "maximum", ptPin = "pin", ptBasic = "basic", ptLength = "length"
 
 proc abort(s: string, c = 1) =
   stderr.writeLine s
@@ -16,8 +16,12 @@ proc mpwc(
   site = "",
   kind = ptLong,
   counter = 1,
+  length = 31,
   stdin = false
 ): int =
+
+  if length <= 0 or length >= 32:
+    abort "Password length must be between 1 and 31"
 
   let tty = system.stdin.isatty
 
@@ -60,7 +64,14 @@ proc mpwc(
       of ptShort: @templateShort
       of ptMaximum: @templateMaximum
       of ptPin: @templatePin
-      of ptBasic: @templateBasic)
+      of ptBasic: @templateBasic
+      of ptLength: @[
+        if length >= 3:
+          "ano" & 'x'.repeat(length - 3)
+        else:
+          "ano"[0..<length]
+        ])
+
     icon = getIdenticon(pass, name)
     color = (case icon.color
       of 0: fgBlack
@@ -78,10 +89,10 @@ proc mpwc(
   if stdout.isatty: stdout.writeLine ""
 
 
-clCfg.version = "0.1.0"
+clCfg.version = "0.1.1"
 dispatch mpwc,
   short = {"pass": 'p', "name": 'n', "site": 's', "kind": 'k', "counter": 'c',
-           "stdin": 'S', "version": 'v'},
+           "stdin": 'S', "length": 'l', "version": 'v'},
   help = {
     "pass": "master password",
     "name": "full name",
@@ -93,6 +104,8 @@ medium  | 8 characters, symbols.
 basic   | 8 characters, no symbols.
 short   | 4 characters, no symbols.
 pin     | 4 numbers.
+length  | length specified by --length option,
+        | maximum 31 characters, symbols.
 """,
     "counter": "site counter",
     "stdin": "read password from stdin",
