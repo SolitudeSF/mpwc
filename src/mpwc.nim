@@ -37,7 +37,8 @@ proc mpwc(
     if stdin:
       pass = system.stdin.readLine
     elif tty:
-      pass = readPasswordFromStdin()
+      stderr.write "password: "
+      pass = readPasswordFromStdin ""
     if pass.len == 0:
       abort "Didn't specify the password"
 
