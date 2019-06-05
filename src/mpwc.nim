@@ -10,6 +10,42 @@ proc abort(s: string, c = 1) =
   stderr.writeLine s
   quit c
 
+when defined(windows):
+  from unicode import toUTF8, Rune, runeLenAt
+
+  proc readPasswordFromStdin*(password: var TaintedString) {.tags: [ReadIOEffect, WriteIOEffect].} =
+    password.string.setLen(0)
+    while true:
+      let c = getch()
+      case c.char
+      of '\r', chr(0xA):
+        break
+      of '\b':
+        var i = 0
+        var x = 1
+        while i < password.len:
+          x = runeLenAt(password.string, i)
+          inc i, x
+        password.string.setLen(max(password.len - x, 0))
+      of chr(0x0):
+        continue
+      else:
+        password.string.add(toUTF8(c.Rune))
+
+else:
+  import termios
+
+  proc readPasswordFromStdin*(password: var TaintedString) {.tags: [ReadIOEffect, WriteIOEffect].} =
+    password.string.setLen(0)
+    let fd = stdin.getFileHandle()
+    var cur, old: Termios
+    discard fd.tcgetattr(cur.addr)
+    old = cur
+    cur.c_lflag = cur.c_lflag and not Cflag(ECHO)
+    discard fd.tcsetattr(TCSADRAIN, cur.addr)
+    password = stdin.readLine
+    discard fd.tcsetattr(TCSADRAIN, old.addr)
+
 proc mpwc(
   pass = "",
   name = "",
@@ -38,7 +74,7 @@ proc mpwc(
       pass = system.stdin.readLine
     elif tty:
       stderr.write "password: "
-      pass = readPasswordFromStdin ""
+      readPasswordFromStdin pass
     if pass.len == 0:
       abort "Didn't specify the password"
 
