@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.1.1"
+version       = "0.1.2"
 author        = "SolitudeSF"
 description   = "Master Password command line utility"
 license       = "MIT"
