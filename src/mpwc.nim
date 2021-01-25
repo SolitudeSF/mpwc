@@ -125,7 +125,7 @@ proc mpwc(
   if stdout.isatty: stdout.writeLine ""
 
 
-clCfg.version = "0.1.2"
+clCfg.version = "0.1.3"
 dispatch mpwc,
   short = {"pass": 'p', "name": 'n', "site": 's', "kind": 'k', "counter": 'c',
            "stdin": 'S', "length": 'l', "version": 'v'},
